@@ -100,6 +100,7 @@ pub fn process_fields<'a>(
         let has_flatten_attr = utils::get_attribute_arg("serde", "flatten", &field.attrs).is_some();
         let serde_skip = utils::get_attribute_arg("serde", "skip", &field.attrs).is_some();
         let serde_rename = utils::get_attribute_arg("serde", "rename", &field.attrs);
+        let type_override = utils::get_attribute_arg("tsync", "ts_type", &field.attrs);
         if has_flatten_attr || serde_skip {
             continue;
         }
@@ -123,7 +124,12 @@ pub fn process_fields<'a>(
             field.ident.map(|i| i.unraw().to_string()).unwrap()
         };
 
-        let field_type = convert_type(&field.ty);
+        let mut field_type = convert_type(&field.ty);
+
+        if let Some(type_override) = type_override {
+            field_type.ts_type = type_override
+        }
+
         state.types.push_str(&format!(
             "{space}{field_name}{optional_parameter_token}: {field_type};\n",
             space = space,
